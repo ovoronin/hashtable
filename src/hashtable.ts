@@ -16,26 +16,39 @@ export class HashTable<T = any> {
     return this.hashFn(key, this.max);
   }
 
+  public size = 0;
+
   constructor() {
     this.data = new Array(this.max).fill(undefined);
   }
 
+  private setAt(index: number, key: string, value: T) {
+    if (!this.data[index % this.max]) {
+      this.size++;
+    }
+    this.data[index % this.max] = { key, value };
+  }
+
+  private isNotKeyAt(index: number, key: string): boolean {
+    return this.data[index % this.max] && this.data[index % this.max].key !== key;
+  }
+
   set(key: string, value: T) {
     const index = this.getIndex(key);
-    if (this.data[index] && this.data[index].key !== key) {
+    if (this.isNotKeyAt(index, key)) {
       // collision
       for (let i = index + 1; i < index + this.max; i++) {
-        // find an empty entry in hashdata
-        if (this.data[i % this.max]) {
+        // find a suitable entry in hashdata
+        if (this.isNotKeyAt(i, key)) {
           continue;
         }
-        this.data[i % this.max] = { key, value };
+        this.setAt(i, key, value);
         return;
       }
       // not found
       throw "Panic";
     } else {
-      this.data[index] = { key, value };
+      this.setAt(index, key, value);
     }
   }
 

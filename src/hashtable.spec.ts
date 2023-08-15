@@ -47,4 +47,13 @@ describe("hash table", () => {
     expect(hashtable.get('ba')).toBe(2);
   });
 
+  it("should have correct size", () => {
+    hashtable.set('ab', 1);
+    hashtable.set('ba', 2);
+
+    expect(hashtable.size).toBe(2);
+
+    hashtable.set('ba', 3);
+    expect(hashtable.size).toBe(2);
+  });
 });
