@@ -57,18 +57,7 @@ describe("hash table", () => {
     expect(hashtable.size).toBe(2);
   });
 
-  it("should handle many items in the table", () => {
-    for (let i = 0; i < 100; i++) {
-      hashtable.set('' + i, i);
-    }
-
-    for (let i = 0; i < 100; i++) {
-      expect(hashtable.get('' + i)).toBe(i);
-    }
-    expect(hashtable.size).toBe(100);
-  });
-
-  it("should handle random keys", () => {
+  it("should handle many random keys", () => {
     const makeKey = (length: number): string => {
       let result = '';
       const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -93,6 +82,25 @@ describe("hash table", () => {
     }
     expect(hashtable.size).toBe(unique);
     console.log(hashtable.collistions);
+
+    // remove items
+    keys.sort((a: string, b: string) => a.localeCompare(b));
+    for (let i = 0; i < count; i++) {
+      hashtable.delete(keys[i]);
+    }
+    expect(hashtable.size).toBe(0);
+
+  });
+
+  it("should remove keys", () => {
+    hashtable.set('ab', 1);
+    hashtable.set('ba', 1);
+
+    expect(hashtable.get('ab')).toBe(1);
+
+    hashtable.delete('ba');
+    expect(hashtable.get('ba')).toBe(undefined);
+    expect(hashtable.size).toBe(1);
   });
 
 });
