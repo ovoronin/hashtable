@@ -56,4 +56,43 @@ describe("hash table", () => {
     hashtable.set('ba', 3);
     expect(hashtable.size).toBe(2);
   });
+
+  it("should handle many items in the table", () => {
+    for (let i = 0; i < 100; i++) {
+      hashtable.set('' + i, i);
+    }
+
+    for (let i = 0; i < 100; i++) {
+      expect(hashtable.get('' + i)).toBe(i);
+    }
+    expect(hashtable.size).toBe(100);
+  });
+
+  it("should handle random keys", () => {
+    const makeKey = (length: number): string => {
+      let result = '';
+      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      const charactersLength = characters.length;
+      let counter = 0;
+      while (counter < length) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        counter += 1;
+      }
+      return result;
+    }
+
+    const count = 10000;
+    const keys = Array.from({ length: count }, () => makeKey(10));
+    const unique = new Set(keys).size;
+    for (let i = 0; i < count; i++) {
+      hashtable.set(keys[i], i);
+    }
+
+    for (let i = 0; i < count; i++) {
+      expect(hashtable.get(keys[i])).toBe(i);
+    }
+    expect(hashtable.size).toBe(unique);
+    console.log(hashtable.collistions);
+  });
+
 });

@@ -8,8 +8,13 @@ export class HashTable<T = any> {
   private data: Array<HashData<T>> = [];
 
   private hashFn(key: string, max: number): number {
-    const sum = key.split('').reduce<number>((s, char) => s += char.charCodeAt(0), 0);
-    return sum % max;
+    let hash = 0;
+    for (let i = 0, len = key.length; i < len; i++) {
+        let chr = key.charCodeAt(i);
+        hash = (hash << 5) - hash + chr;
+        hash |= 0; // Convert to 32bit integer
+    }
+    return Math.abs(hash) % max;
   }
 
   private getIndex(key: string): number {
@@ -17,8 +22,15 @@ export class HashTable<T = any> {
   }
 
   public size = 0;
+  public collistions = 0;
 
   constructor() {
+    this.init();
+  }
+
+  private init() {
+    this.size = 0;
+    this.collistions = 0;
     this.data = new Array(this.max).fill(undefined);
   }
 
@@ -37,6 +49,14 @@ export class HashTable<T = any> {
     const index = this.getIndex(key);
     if (this.isNotKeyAt(index, key)) {
       // collision
+      this.collistions++;
+
+      if (this.size > this.max * 0.5) {
+        this.grow();
+        this.set(key, value);
+        return;
+      }
+
       for (let i = index + 1; i < index + this.max; i++) {
         // find a suitable entry in hashdata
         if (this.isNotKeyAt(i, key)) {
@@ -52,6 +72,18 @@ export class HashTable<T = any> {
     }
   }
 
+  grow() {
+    const copy = [ ...this.data ];
+    this.max *= 2;
+    this.init();
+
+    for (let item of copy) {
+      if (item) {
+        this.set(item.key, item.value);
+      }
+    }
+  }
+
   get(key: string): T | undefined {
     const index = this.getIndex(key);
     if (!this.data[index]) {
@@ -63,6 +95,6 @@ export class HashTable<T = any> {
         return hashdata.value;
       }
     }
-    throw "Panic";
+    return undefined;
   }
 }
