@@ -31,4 +31,20 @@ describe("hash table", () => {
     expect(hashtable.get('b')).toBe(2);
   });
 
+  it("should set a value if exists", () => {
+    hashtable.set('a', 1);
+    hashtable.set('a', 2);
+    hashtable.set('a', 3);
+
+    expect(hashtable.get('a')).toBe(3);
+  });
+
+  it("should handle collisions", () => {
+    hashtable.set('ab', 1);
+    hashtable.set('ba', 2);
+
+    expect(hashtable.get('ab')).toBe(1);
+    expect(hashtable.get('ba')).toBe(2);
+  });
+
 });
