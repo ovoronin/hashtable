@@ -103,4 +103,28 @@ describe("hash table", () => {
     expect(hashtable.size).toBe(1);
   });
 
+  it("should be iterable", () => {
+    hashtable.set('ab', 1);
+    hashtable.set('ba', 1);
+
+    expect([...hashtable]).toEqual([ ['ab', 1], ['ba', 1]]);
+  });
+
+  it("can be constructed from iterable", () => {
+    const h = new HashTable([
+      [ 'ab', 1 ],
+      [ 'ba', 2 ],
+    ])
+
+    expect(h.size).toEqual(2);
+  });
+
+  it("can be constructed from another hash table", () => {
+    hashtable.set('ab', 1);
+
+    const h = new HashTable(hashtable);
+
+    expect(h.size).toEqual(1);
+  });
+
 });

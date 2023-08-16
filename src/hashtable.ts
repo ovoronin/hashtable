@@ -3,7 +3,7 @@ interface HashData<T> {
   value: T;
 }
 
-export class HashTable<T = any> {
+export class HashTable<T = any> implements Iterable<[string, T]> {
   private max = 8;
   private data: Array<HashData<T> | undefined> = [];
 
@@ -20,8 +20,15 @@ export class HashTable<T = any> {
   public size = 0;
   public collistions = 0;
 
-  constructor() {
+  constructor(from?: Iterable<[string, T]>) {
     this.init();
+    if (from) {
+      for (let item of from) {
+        if (item) {
+          this.set(item[0], item[1]);
+        }
+      }
+    }
   }
 
   private init() {
@@ -107,11 +114,24 @@ export class HashTable<T = any> {
     this.data[index] = undefined;
     this.size--;
   }
+
+  [Symbol.iterator](): Iterator<[string, T]> {
+    let index = 0;
+    const entries = this.data.filter(item => !!item);
+
+    return {
+      next: () => {
+        if (index < entries.length) {
+          const data = entries[index++];
+          return { value: [data!.key, data!.value], done: false };
+        } else {
+          return { value: undefined, done: true };
+        }
+      },
+    };
+  }
 }
 
 // TODO
-// make iterable
-// symbols as keys??
-// construct from iterable
 // clear()
 // has()
