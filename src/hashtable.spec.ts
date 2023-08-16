@@ -107,13 +107,13 @@ describe("hash table", () => {
     hashtable.set('ab', 1);
     hashtable.set('ba', 1);
 
-    expect([...hashtable]).toEqual([ ['ab', 1], ['ba', 1]]);
+    expect([...hashtable]).toEqual([['ab', 1], ['ba', 1]]);
   });
 
   it("can be constructed from iterable", () => {
     const h = new HashTable([
-      [ 'ab', 1 ],
-      [ 'ba', 2 ],
+      ['ab', 1],
+      ['ba', 2],
     ])
 
     expect(h.size).toEqual(2);
@@ -127,4 +127,21 @@ describe("hash table", () => {
     expect(h.size).toEqual(1);
   });
 
+  it("should be clearable", () => {
+    hashtable.set('ab', 1);
+    hashtable.set('ba', 1);
+
+    expect(hashtable.size).toEqual(2);
+
+    hashtable.clear();
+    expect(hashtable.size).toEqual(0);
+  });
+
+  it("should have 'has' method", () => {
+    hashtable.set('ab', 1);
+    hashtable.set('ba', 1);
+
+    expect(hashtable.has('ab')).toBe(true);
+    expect(hashtable.has('absdfsfsf')).toBe(false);
+  });
 });

@@ -3,8 +3,10 @@ interface HashData<T> {
   value: T;
 }
 
+const initialMax = 8;
+
 export class HashTable<T = any> implements Iterable<[string, T]> {
-  private max = 8;
+  private max = initialMax;
   private data: Array<HashData<T> | undefined> = [];
 
   private hash(key: string): number {
@@ -35,6 +37,11 @@ export class HashTable<T = any> implements Iterable<[string, T]> {
     this.size = 0;
     this.collistions = 0;
     this.data = new Array(this.max).fill(undefined);
+  }
+
+  public clear() {
+    this.max = initialMax;
+    this.init();
   }
 
   private setAt(index: number, key: string, value: T) {
@@ -98,6 +105,10 @@ export class HashTable<T = any> implements Iterable<[string, T]> {
     return -1;
   }
 
+  has(key: string): boolean {
+    return this.findIndex(key) !== -1;
+  }
+
   get(key: string): T | undefined {
     const index = this.findIndex(key);
     if (index === -1) {
@@ -131,7 +142,3 @@ export class HashTable<T = any> implements Iterable<[string, T]> {
     };
   }
 }
-
-// TODO
-// clear()
-// has()
