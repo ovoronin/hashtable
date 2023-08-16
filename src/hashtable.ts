@@ -1,13 +1,13 @@
-interface HashData<T> {
+interface Bucket<T> {
   key: string;
   value: T;
 }
 
-const initialMax = 8;
+const initialMaxBuckets = 8;
 
 export class HashTable<T = any> implements Iterable<[string, T]> {
-  private max = initialMax;
-  private data: Array<HashData<T> | undefined> = [];
+  private maxBuckets = initialMaxBuckets;
+  private buckets: Array<Bucket<T> | undefined> = [];
 
   private hash(key: string): number {
     let hash = 0;
@@ -16,7 +16,7 @@ export class HashTable<T = any> implements Iterable<[string, T]> {
         hash = (hash << 5) - hash + chr;
         hash |= 0; // Convert to 32bit integer
     }
-    return Math.abs(hash) % this.max;
+    return Math.abs(hash) % this.maxBuckets;
   }
 
   public size = 0;
@@ -24,6 +24,7 @@ export class HashTable<T = any> implements Iterable<[string, T]> {
 
   constructor(from?: Iterable<[string, T]>) {
     this.init();
+
     if (from) {
       for (let item of from) {
         if (item) {
@@ -36,44 +37,43 @@ export class HashTable<T = any> implements Iterable<[string, T]> {
   private init() {
     this.size = 0;
     this.collistions = 0;
-    this.data = new Array(this.max).fill(undefined);
+    this.buckets = new Array(this.maxBuckets).fill(undefined);
   }
 
   public clear() {
-    this.max = initialMax;
+    this.maxBuckets = initialMaxBuckets;
     this.init();
   }
 
   private setAt(index: number, key: string, value: T) {
-    if (!this.data[index % this.max]) {
+    if (!this.buckets[index % this.maxBuckets]) {
       this.size++;
     }
-    this.data[index % this.max] = { key, value };
+    this.buckets[index % this.maxBuckets] = { key, value };
   }
 
-  private isNotKeyAt(index: number, key: string): boolean {
-    return !!this.data[index % this.max] && this.data[index % this.max]?.key !== key;
+  private collision(index: number, key: string): boolean {
+    const i = index % this.maxBuckets;
+    return !!this.buckets[i] && this.buckets[i]?.key !== key;
   }
 
   set(key: string, value: T) {
     const index = this.hash(key);
-    if (this.isNotKeyAt(index, key)) {
-      // collision
+    if (this.collision(index, key)) {
       this.collistions++;
 
-      if (this.size > this.max * 0.5) {
+      if (this.size > this.maxBuckets * 0.5) {
         this.grow();
         this.set(key, value);
         return;
       }
 
-      for (let i = index + 1; i < index + this.max; i++) {
-        // find a suitable entry in hashdata
-        if (this.isNotKeyAt(i, key)) {
-          continue;
+      for (let i = index + 1; i < index + this.maxBuckets; i++) {
+        // find a suitable bucket
+        if (!this.collision(i, key)) {
+          this.setAt(i, key, value);
+          return;
         }
-        this.setAt(i, key, value);
-        return;
       }
       // not found
       throw "Panic";
@@ -83,22 +83,22 @@ export class HashTable<T = any> implements Iterable<[string, T]> {
   }
 
   grow() {
-    const copy = [ ...this.data ];
-    this.max *= 2;
+    const copy = [ ...this.buckets ];
+    this.maxBuckets *= 2;
     this.init();
 
-    for (let item of copy) {
-      if (item) {
-        this.set(item.key, item.value);
+    for (let bucket of copy) {
+      if (bucket) {
+        this.set(bucket.key, bucket.value);
       }
     }
   }
 
   private findIndex(key: string): number | -1 {
     const index = this.hash(key);
-    for (let i = index; i < index + this.max; i++) {
-      const hashdata = this.data[i % this.max];
-      if (hashdata?.key === key) {
+    for (let i = index; i < index + this.maxBuckets; i++) {
+      const bucket = this.buckets[i % this.maxBuckets];
+      if (bucket?.key === key) {
         return i;
       }
     }
@@ -114,7 +114,7 @@ export class HashTable<T = any> implements Iterable<[string, T]> {
     if (index === -1) {
       return undefined;
     }
-    return this.data[index]?.value;
+    return this.buckets[index]?.value;
   }
 
   delete(key: string) {
@@ -122,19 +122,19 @@ export class HashTable<T = any> implements Iterable<[string, T]> {
     if (index === -1) {
       return;
     }
-    this.data[index] = undefined;
+    this.buckets[index] = undefined;
     this.size--;
   }
 
   [Symbol.iterator](): Iterator<[string, T]> {
     let index = 0;
-    const entries = this.data.filter(item => !!item);
+    const buckets = this.buckets.filter(item => !!item);
 
     return {
       next: () => {
-        if (index < entries.length) {
-          const data = entries[index++];
-          return { value: [data!.key, data!.value], done: false };
+        if (index < buckets.length) {
+          const bucket = buckets[index++];
+          return { value: [bucket!.key, bucket!.value], done: false };
         } else {
           return { value: undefined, done: true };
         }
