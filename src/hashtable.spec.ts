@@ -1,7 +1,19 @@
-import { HashTable } from "./hashtable"
+import { HashTable, hashFn } from "./hashtable"
 
 describe("hash table", () => {
   let hashtable: HashTable;
+
+  const randomKey = (length: number): string => {
+    let result = '';
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const charactersLength = characters.length;
+    let counter = 0;
+    while (counter < length) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+      counter++;
+    }
+    return result;
+  }
 
   beforeEach(() => {
     hashtable = new HashTable();
@@ -40,11 +52,12 @@ describe("hash table", () => {
   });
 
   it("should handle collisions", () => {
-    hashtable.set('ab', 1);
-    hashtable.set('ba', 2);
+    hashtable.set('19YN4', 1);
+    hashtable.set('hgLkU', 2);
 
-    expect(hashtable.get('ab')).toBe(1);
-    expect(hashtable.get('ba')).toBe(2);
+    expect(hashtable.get('19YN4')).toBe(1);
+    expect(hashtable.get('hgLkU')).toBe(2);
+    expect(hashtable.collistions).toBe(1);
   });
 
   it("should have correct size", () => {
@@ -58,20 +71,8 @@ describe("hash table", () => {
   });
 
   it("should handle many random keys", () => {
-    const makeKey = (length: number): string => {
-      let result = '';
-      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-      const charactersLength = characters.length;
-      let counter = 0;
-      while (counter < length) {
-        result += characters.charAt(Math.floor(Math.random() * charactersLength));
-        counter += 1;
-      }
-      return result;
-    }
-
     const count = 10000;
-    const keys = Array.from({ length: count }, () => makeKey(10));
+    const keys = Array.from({ length: count }, () => randomKey(10));
     const unique = new Set(keys).size;
     for (let i = 0; i < count; i++) {
       hashtable.set(keys[i], i);
@@ -144,4 +145,16 @@ describe("hash table", () => {
     expect(hashtable.has('ab')).toBe(true);
     expect(hashtable.has('absdfsfsf')).toBe(false);
   });
+
+  xit("find collided keys", () => {
+    for (let i = 0; i < 100; i++) {
+      const key1 = randomKey(5);
+      const key2 = randomKey(5);
+      if (hashFn(key1, 8) === hashFn(key2, 8)) {
+        console.log(key1, key2);
+      }
+    }
+    expect(true).toBe(true);
+  });
+
 });

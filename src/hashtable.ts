@@ -5,18 +5,22 @@ interface Bucket<T> {
 
 const initialMaxBuckets = 8;
 
+export const hashFn = (key: string, max: number): number => {
+  let hash = 0;
+  for (let i = 0, len = key.length; i < len; i++) {
+    let chr = key.charCodeAt(i);
+    hash = (hash << 5) - hash + chr;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return Math.abs(hash) % max;
+}
+
 export class HashTable<T = any> implements Iterable<[string, T]> {
   private maxBuckets = initialMaxBuckets;
   private buckets: Array<Bucket<T> | undefined> = [];
 
   private hash(key: string): number {
-    let hash = 0;
-    for (let i = 0, len = key.length; i < len; i++) {
-        let chr = key.charCodeAt(i);
-        hash = (hash << 5) - hash + chr;
-        hash |= 0; // Convert to 32bit integer
-    }
-    return Math.abs(hash) % this.maxBuckets;
+    return hashFn(key, this.maxBuckets);
   }
 
   public size = 0;
@@ -83,7 +87,7 @@ export class HashTable<T = any> implements Iterable<[string, T]> {
   }
 
   grow() {
-    const copy = [ ...this.buckets ];
+    const copy = [...this.buckets];
     this.maxBuckets *= 2;
     this.init();
 
@@ -99,7 +103,7 @@ export class HashTable<T = any> implements Iterable<[string, T]> {
     for (let i = index; i < index + this.maxBuckets; i++) {
       const bucket = this.buckets[i % this.maxBuckets];
       if (bucket?.key === key) {
-        return i;
+        return i % this.maxBuckets;
       }
     }
     return -1;
