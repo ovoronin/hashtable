@@ -16,7 +16,7 @@ export class HashTable<T = any> implements Iterable<[string, T]> {
   }
 
   private nBuckets = HashTable.initialNBuckets;
-  private buckets: Array<Bucket<T> | undefined> = [];
+  protected buckets: Array<Bucket<T> | undefined> = [];
 
   public hash(key: string): number {
     return HashTable.hashFn(key) % this.nBuckets;
@@ -131,19 +131,11 @@ export class HashTable<T = any> implements Iterable<[string, T]> {
     this.size--;
   }
 
-  [Symbol.iterator](): Iterator<[string, T]> {
-    let hash = 0;
+  *[Symbol.iterator](): IterableIterator<[string, T]> {
     const buckets = this.buckets.filter(bucket => !!bucket);
 
-    return {
-      next: () => {
-        if (hash < buckets.length) {
-          const bucket = buckets[hash++];
-          return { value: [bucket!.key, bucket!.value], done: false };
-        } else {
-          return { value: undefined, done: true };
-        }
-      },
-    };
+    for (let bucket of buckets) {
+      yield [ bucket!.key, bucket!.value ];
+    }
   }
 }
