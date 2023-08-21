@@ -101,6 +101,19 @@ describe("hash table", () => {
     expect(h.size).toBe(1);
   });
 
+  xit("TODO: should work correctly after removal", () => {
+    h.set(collidedKey1, 1);
+    h.set(collidedKey2, 2);
+
+    h.delete(collidedKey1);
+    expect(h.get(collidedKey1)).toBe(undefined);
+    expect(h.size).toBe(1);
+
+    h.set(collidedKey2, 3)
+    expect(h.get(collidedKey2)).toBe(3);
+    expect(h.size).toBe(1);
+  });
+
   it("should be iterable", () => {
     h.set('ab', 1);
     h.set('ba', 1);
