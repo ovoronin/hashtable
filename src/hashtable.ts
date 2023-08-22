@@ -1,4 +1,4 @@
-interface Bucket<T> {
+interface Entry<T> {
   key: string;
   value: T;
 }
@@ -17,7 +17,7 @@ export class HashTable<T = any> implements Iterable<[string, T]> {
   }
 
   private nBuckets = HashTable.initialNBuckets;
-  protected buckets: Array<Array<Bucket<T>>> = [];
+  protected buckets: Array<Array<Entry<T>>> = [];
 
   public hash(key: string): number {
     return HashTable.hashFn(key) % this.nBuckets;
@@ -39,7 +39,7 @@ export class HashTable<T = any> implements Iterable<[string, T]> {
   private init() {
     this.size = 0;
     this.collistions = 0;
-    this.buckets = new Array(this.nBuckets).fill(null).map(x => []);
+    this.buckets = Array.from({ length: this.nBuckets }, () => []);
   }
 
   public clear() {
@@ -47,22 +47,22 @@ export class HashTable<T = any> implements Iterable<[string, T]> {
     this.init();
   }
 
-  findBucket(hash: number, key: string): Bucket<T> | undefined {
+  findEntry(hash: number, key: string): Entry<T> | undefined {
     return this.buckets[hash].find(b => b.key === key);
   }
 
   set(key: string, value: T) {
     const hash = this.hash(key);
-    const bucket = this.findBucket(hash, key);
+    const entry = this.findEntry(hash, key);
 
-    if (!bucket) {
+    if (!entry) {
       this.buckets[hash].push({ key, value });
       if (this.buckets[hash].length > 1) {
         this.collistions++;
       }
       this.size++;
     } else {
-      bucket.value = value;
+      entry.value = value;
     }
 
     const loadFactor = this.size / this.nBuckets;
@@ -71,7 +71,7 @@ export class HashTable<T = any> implements Iterable<[string, T]> {
     }
   }
 
-  grow() {
+  private grow() {
     const copy = [...this];
     this.nBuckets *= 2;
     this.init();
@@ -82,17 +82,17 @@ export class HashTable<T = any> implements Iterable<[string, T]> {
   }
 
   get(key: string): T | undefined {
-    return this.findBucket(this.hash(key), key)?.value;
+    return this.findEntry(this.hash(key), key)?.value;
   }
 
   has(key: string): boolean {
-    return !!this.findBucket(this.hash(key), key);
+    return !!this.findEntry(this.hash(key), key);
   }
 
   delete(key: string) {
     const hash = this.hash(key);
-    this.buckets[hash] = this.buckets[hash].filter(b => {
-      const toDelete = b.key === key;
+    this.buckets[hash] = this.buckets[hash].filter(entry => {
+      const toDelete = entry.key === key;
       if (toDelete) {
         this.size--;
       }
@@ -101,10 +101,23 @@ export class HashTable<T = any> implements Iterable<[string, T]> {
   }
 
   *[Symbol.iterator](): IterableIterator<[string, T]> {
-    for (let buckets of this.buckets) {
-      for (let bucket of buckets) {
-        yield [ bucket.key, bucket.value ];
+    for (let bucket of this.buckets) {
+      for (let entry of bucket) {
+        yield [entry.key, entry.value];
       }
     }
+  }
+
+  getAvgEntries(): number {
+    let sum = 0;
+    let cnt = 0;
+    this.buckets.forEach(bucket => {
+      if (bucket.length) {
+        sum += bucket.length;
+        cnt++;
+      }
+    });
+
+    return sum / cnt;
   }
 }

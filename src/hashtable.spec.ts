@@ -70,7 +70,7 @@ describe("hash table", () => {
   });
 
   it("should handle many random keys", () => {
-    const count = 10000;
+    const count = 10_000;
     const keys = Array.from({ length: count }, () => randomKey(10));
     const unique = new Set(keys).size;
     for (let i = 0; i < count; i++) {
@@ -81,7 +81,8 @@ describe("hash table", () => {
       expect(h.get(keys[i])).toBe(i);
     }
     expect(h.size).toBe(unique);
-    console.log(h.collistions);
+    console.log('Collisions:', h.collistions);
+    console.log('Avg buckets load:', h.getAvgEntries());
 
     // remove items
     keys.sort((a: string, b: string) => a.localeCompare(b));
