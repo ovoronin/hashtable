@@ -5,6 +5,7 @@ interface Bucket<T> {
 
 export class HashTable<T = any> implements Iterable<[string, T]> {
   static readonly initialNBuckets = 8;
+
   static hashFn = (key: string): number => {
     let hash = 0;
     for (let i = 0, len = key.length; i < len; i++) {
@@ -16,7 +17,7 @@ export class HashTable<T = any> implements Iterable<[string, T]> {
   }
 
   private nBuckets = HashTable.initialNBuckets;
-  protected buckets: Array<Bucket<T> | undefined> = [];
+  protected buckets: Array<Array<Bucket<T>>> = [];
 
   public hash(key: string): number {
     return HashTable.hashFn(key) % this.nBuckets;
@@ -30,9 +31,7 @@ export class HashTable<T = any> implements Iterable<[string, T]> {
 
     if (from) {
       for (let item of from) {
-        if (item) {
-          this.set(item[0], item[1]);
-        }
+        this.set(item[0], item[1]);
       }
     }
   }
@@ -40,7 +39,7 @@ export class HashTable<T = any> implements Iterable<[string, T]> {
   private init() {
     this.size = 0;
     this.collistions = 0;
-    this.buckets = new Array(this.nBuckets).fill(undefined);
+    this.buckets = new Array(this.nBuckets).fill(null).map(x => []);
   }
 
   public clear() {
@@ -48,94 +47,64 @@ export class HashTable<T = any> implements Iterable<[string, T]> {
     this.init();
   }
 
-  private setAt(hash: number, key: string, value: T) {
-    const h = hash % this.nBuckets;
-    if (!this.buckets[h]) {
-      this.size++;
-    }
-    this.buckets[h] = { key, value };
-  }
-
-  private findHash(key: string): number | -1 {
-    const hash = this.hash(key);
-    for (let h = hash; h < hash + this.nBuckets; h++) {
-      const bucket = this.buckets[h % this.nBuckets];
-      if (bucket?.key === key) {
-        return h % this.nBuckets;
-      }
-    }
-    return -1;
-  }
-
-  private collision(hash: number, key: string): boolean {
-    const h = hash % this.nBuckets;
-    return !!this.buckets[h] && this.buckets[h]?.key !== key;
+  findBucket(hash: number, key: string): Bucket<T> | undefined {
+    return this.buckets[hash].find(b => b.key === key);
   }
 
   set(key: string, value: T) {
     const hash = this.hash(key);
-    if (this.collision(hash, key)) {
-      this.collistions++;
+    const bucket = this.findBucket(hash, key);
 
-      const loadFactor = this.size / this.nBuckets;
-      if (loadFactor > 0.6) {
-        this.grow();
-        this.set(key, value);
-        return;
+    if (!bucket) {
+      this.buckets[hash].push({ key, value });
+      if (this.buckets[hash].length > 1) {
+        this.collistions++;
       }
-
-      for (let h = hash + 1; h < hash + this.nBuckets; h++) {
-        // find a suitable bucket
-        if (!this.collision(h, key)) {
-          this.setAt(h, key, value);
-          return;
-        }
-      }
-      // not found
-      throw "Panic";
+      this.size++;
     } else {
-      this.setAt(hash, key, value);
+      bucket.value = value;
+    }
+
+    const loadFactor = this.size / this.nBuckets;
+    if (loadFactor > 0.6) {
+      this.grow();
     }
   }
 
   grow() {
-    const copy = [...this.buckets];
+    const copy = [...this];
     this.nBuckets *= 2;
     this.init();
 
     for (let bucket of copy) {
-      if (bucket) {
-        this.set(bucket.key, bucket.value);
-      }
+      this.set(bucket[0], bucket[1]);
     }
   }
 
   get(key: string): T | undefined {
-    const hash = this.findHash(key);
-    if (hash === -1) {
-      return undefined;
-    }
-    return this.buckets[hash]?.value;
+    return this.findBucket(this.hash(key), key)?.value;
   }
 
   has(key: string): boolean {
-    return this.findHash(key) !== -1;
+    return !!this.findBucket(this.hash(key), key);
   }
 
   delete(key: string) {
-    const hash = this.findHash(key);
-    if (hash === -1) {
-      return;
-    }
-    this.buckets[hash] = undefined;
-    this.size--;
+    const hash = this.hash(key);
+    this.buckets[hash] = this.buckets[hash].filter(b => {
+      const toDelete = b.key === key;
+      if (toDelete) {
+        this.size--;
+      }
+      return !toDelete;
+    });
   }
 
   *[Symbol.iterator](): IterableIterator<[string, T]> {
-    const buckets = this.buckets.filter(bucket => !!bucket);
-
-    for (let bucket of buckets) {
-      yield [ bucket!.key, bucket!.value ];
+    for (let buckets of this.buckets) {
+      for (let bucket of buckets) {
+        yield [ bucket.key, bucket.value ];
+      }
     }
   }
 }

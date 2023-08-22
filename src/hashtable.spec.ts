@@ -101,7 +101,7 @@ describe("hash table", () => {
     expect(h.size).toBe(1);
   });
 
-  xit("TODO: should work correctly after removal", () => {
+  it("should work correctly after removal", () => {
     h.set(collidedKey1, 1);
     h.set(collidedKey2, 2);
 
@@ -128,6 +128,7 @@ describe("hash table", () => {
     ])
 
     expect(h.size).toEqual(2);
+    expect([...h]).toEqual([['ab', 1], ['ba', 2]]);
   });
 
   it("can be constructed from another hash table", () => {
